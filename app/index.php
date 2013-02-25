@@ -19,9 +19,9 @@ $app->get('/', function() use ($app){
 	$report = new Report;
 	$report->load(__DIR__ . '/reports/shops.xml');
 	$report->compute();
-	echo $report->renderAsHTML();
+	//echo $report->renderAsHTML();
 
-	//$report->sendAsExcel();
+	$report->sendAsExcel();
 
 	return $app['twig']->render('index.html.twig', array());
 })->bind('home');

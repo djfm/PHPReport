@@ -90,7 +90,8 @@ class Report
 				{
 					$columns[] = array(
 						'field'   => (string)$column['field'],
-						'display' => (string)($column['display'] ? $column['display'] : $column['field'])
+						'display' => (string)($column['display'] ? $column['display'] : $column['field']),
+						'style'   => $column['style'] ? array_map('trim',explode(',',(string)$column['style'])) : array()
 					);
 				}
 				$v['columns'] = $columns;
@@ -175,6 +176,32 @@ class Report
 							}
 						}
 					}
+
+					foreach($this->views[$view_name]['columns'] as $c)
+					{
+						$suffix = "";
+						foreach($c['style'] as $s)
+						{
+							if($s == '%')
+							{
+								$row[$c['field']]['value'] = round(100*$row[$c['field']]['value'],2);
+								$suffix = '%';
+							}
+							if($s == 'pn')
+							{
+								if($row[$c['field']]['value'] < 0)
+								{
+									$row[$c['field']]['computed-style'][] = array('color' => '#660000');
+								}
+								else if($row[$c['field']]['value'] > 0)
+								{
+									$row[$c['field']]['computed-style'][] = array('color' => '#006600');
+								}
+							}
+						}
+						$row[$c['field']]['value'] .= $suffix;
+					}
+
 				}
 			}
 
@@ -496,6 +523,10 @@ class Report
 							if($k == 'background-color')
 							{
 								$style .= " background-color:$v;";
+							}
+							else if($k == 'color')
+							{
+								$style .= " color:$v;";
 							}
 						}
 					}
