@@ -80,7 +80,12 @@ class Report
 			$v['highlight-rows'] = array();
 			foreach($view->{"highlight-rows"} as $hl)
 			{
-				$v['highlight-rows'][] = array('condition' => (string)$hl['if'], 'background-color' => (string)$hl['background-color']);
+				$f = array('condition' => (string)$hl['if']);
+				
+				if(isset($hl['background-color']))$f['background-color'] = (string)$hl['background-color'];
+				if(isset($hl['color']))$f['color'] = (string)$hl['color'];
+				//echo "<pre>"; print_r($f); echo "</pre>";
+				$v['highlight-rows'][] = $f;
 			}
 
 			if($v['type'] == 'table')
@@ -156,7 +161,9 @@ class Report
 			$evaluators = array();
 			foreach($view['highlight-rows'] as $hl)
 			{
-				$evaluators[] = array('evaluator' => new Evaluator($hl['condition']), 'style' => array( 'background-color' => $hl['background-color'] ));
+				$st = array();
+				foreach($hl as $k => $v)if($k != 'condition')$st[$k]=$v;
+				$evaluators[] = array('evaluator' => new Evaluator($hl['condition']), 'style' => $st);
 			}
 			if(count($evaluators) > 0)
 			{
@@ -226,6 +233,12 @@ class Report
 				{
 					$st['font'] = array('bold' => true);
 				}
+				if(isset($style['color']))
+				{
+					$color = new PHPExcel_Style_Color();
+					$color->setRGB(substr($style['color'],1));
+					$sheet->getStyle($coords)->getFont()->setColor($color);
+				}
 				if(isset($style['extra']))
 				{
 					foreach($style['extra'] as $k => $a)
@@ -266,7 +279,7 @@ class Report
 			{
 				$current_row = $desc['row'];
 				$new_row = true;
-				$tat += $max_row_height + 2;
+				$tat += $max_row_height + 3;
 			}
 			if($new_row)
 			{
@@ -278,6 +291,10 @@ class Report
 				$tal += $previous_table_width + 1;
 			}
 
+
+			//write title
+			$write($tat, $tal, $view_name, array('bold' => true, 'color' => '#C50747', 'background-color' => '#FFC14F'));
+			$sheet->mergeCells($cell($tat, $tal) . ':' . $cell($tat,$tal+count($desc['columns'])-1));
 			//write headers
 			$loff = 0;
 			foreach($desc['columns'] as $c)
@@ -291,12 +308,12 @@ class Report
 				$style['background-color'] = "#FFC14F";
 				$style['bold'] = true;
 
-				$write($tat, $tal + $loff, $c['display'], $style);
+				$write($tat + 1, $tal + $loff, $c['display'], $style);
 				$loff += 1;
 			}
 
 			//write data
-			$toff = 1;
+			$toff = 2;
 			foreach($data as $line)
 			{
 				$loff = 0;
@@ -378,6 +395,9 @@ class Report
 
 		$html .="
 		<style>
+		body{
+			font-family: sans-serif;
+		}
 		.evenly-container {
 		    text-align: justify;
 		    -ms-text-justify: distribute-all-lines;
@@ -389,11 +409,12 @@ class Report
 		}
 
 		.evenly-box {
+			margin-top:15px;
 		    vertical-align: top;
 		    display: inline-block;
 		    *display: inline;
 		    zoom: 1;
-		    font-size: medium;
+		    font-size:small;
 		}
 
 		.stretch {
@@ -417,6 +438,7 @@ class Report
 		table.report-table th, table.report-table td
 		{
 			padding-right:10px;
+			font-size:small;
 		}
 
 		table.report-table tr:not(:first-child) th
@@ -496,6 +518,10 @@ class Report
 							if($k == 'background-color')
 							{
 								$style .= " background-color:$v;";
+							}
+							else if($k == 'color')
+							{
+								$style .= " color:$v;";
 							}
 						}
 					}
