@@ -82,6 +82,8 @@ class Evaluator
 		$this->canonicalize($nodes);
 
 		$this->ast = $nodes;
+
+		
 	}
 
 	public function getParsedExpression()

@@ -43,6 +43,11 @@ class Report
 	public $datasets    = array();
 	public $views       = array();
 
+	public function replaceVars($str)
+	{
+		return str_replace('$now', date('Y-m-d'), $str);
+	}
+
 	public function load($path)
 	{
 		$report = new SimpleXMLElement(file_get_contents($path));
@@ -95,7 +100,7 @@ class Report
 				{
 					$columns[] = array(
 						'field'   => (string)$column['field'],
-						'display' => (string)($column['display'] ? $column['display'] : $column['field']),
+						'display' => (string)($column['display'] ? $this->replaceVars($column['display']) : $column['field']),
 						'style'   => $column['style'] ? array_map('trim',explode(',',(string)$column['style'])) : array()
 					);
 				}
@@ -194,7 +199,7 @@ class Report
 								$row[$c['field']]['value'] = round(100*$row[$c['field']]['value'],2);
 								$suffix = '%';
 							}
-							if($s == 'pn')
+							else if($s == 'pn')
 							{
 								if($row[$c['field']]['value'] < 0)
 								{
@@ -206,6 +211,15 @@ class Report
 								}
 							}
 						}
+						if(is_numeric($row[$c['field']]['value']))
+						{
+							$row[$c['field']]['computed-style'][] = array('text-align' => 'right');
+							if(strpos($row[$c['field']]['value'], '.') === false)
+								$row[$c['field']]['value'] = number_format((int)$row[$c['field']]['value']);
+						}
+
+
+
 						$row[$c['field']]['value'] .= $suffix;
 					}
 
@@ -329,7 +343,7 @@ class Report
 				$borders = array();
 				foreach(array('top', 'bottom', 'left', 'right') as $b)
 				{
-					$borders[$b] = array('style' => PHPExcel_Style_Border::BORDER_THIN);
+					$borders[$b] = array('style' => PHPExcel_Style_Border::BORDER_HAIR);
 				}
 				$style = array('extra' => array('borders' => $borders));
 				$style['background-color'] = "#FFC14F";
@@ -346,7 +360,7 @@ class Report
 				$loff = 0;
 				foreach($desc['columns'] as $c)
 				{
-					$style = array('extra' => array('borders' => array('bottom' => array('style' => PHPExcel_Style_Border::BORDER_THIN))));
+					$style = array('extra' => array('borders' => array('bottom' => array('style' => PHPExcel_Style_Border::BORDER_HAIR))));
 					foreach($line[$c['field']]['computed-style'] as $s)
 					{
 						foreach($s as $k => $v)
@@ -365,7 +379,7 @@ class Report
 			$borders = array();
 			foreach(array('top', 'bottom', 'left', 'right') as $b)
 			{
-				$borders[$b] = array('style' => PHPExcel_Style_Border::BORDER_THIN);
+				$borders[$b] = array('style' => PHPExcel_Style_Border::BORDER_HAIR);
 			}
 			$sheet->getStyle($cell($tat,$tal).':'.$cell($tat + $toff - 1, $tal + count($desc['columns']) - 1))->applyFromArray(array('borders' => $borders));
 
@@ -542,14 +556,7 @@ class Report
 					{
 						foreach($s as $k => $v)
 						{
-							if($k == 'background-color')
-							{
-								$style .= " background-color:$v;";
-							}
-							else if($k == 'color')
-							{
-								$style .= " color:$v;";
-							}
+							$style.= "$k:$v;";
 						}
 					}
 					$vhtml .= "<td style='$style'>";
