@@ -51,6 +51,8 @@ class Report
 	public function load($path)
 	{
 		$report = new SimpleXMLElement(file_get_contents($path));
+
+		$this->name = (string)$report['name'];
 		
 		foreach($report->connection as $connection)
 		{
@@ -497,13 +499,21 @@ class Report
 			border-bottom:1px solid #ccc;
 		}
 
+		h1{
+			display:block;
+			text-align:center;
+			padding:10px;
+			background-color:#F0F0F0;
+		}
+
 		</style>
 
 
 
 		";
-
+		
 		$html .= "<div>";
+		$html .= "<h1>" . $this->name . "</h1>";
 
 		$current_row = false;
 
